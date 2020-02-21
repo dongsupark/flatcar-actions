@@ -1,0 +1,37 @@
+name: Automatically update Flatcar docs on Branch Push
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  auto-flatcar-docs:
+    name: Automatically update Flatcar docs
+    runs-on: ubuntu-latest
+    steps:
+      - name: ssh-agent
+        uses: webfactory/ssh-agent@v0.2.0
+        with:
+          ssh-private-key: ${{ secrets.FLATCAR_DOCS_KEY }}
+      - name: set up git user
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ssh-private-key: ${{ secrets.FLATCAR_DOCS_KEY }}
+        run: |
+          git config --global user.name 'Flatcar Buildbot'
+          git config --global user.email 'buildbot@flatcar-linux.org'
+          git clone git@github.com:dongsupark/docs-test
+          sudo apt-get install -y docker-compose
+          git clone https://github.com/kinvolk/flatcar-website-docs
+          pushd flatcar-website-docs || exit
+          git submodule update --init --recursive --remote
+          make docker-compose
+          popd || exit
+          git clone git@github.com:kinvolk/docs.flatcar-linux.org
+          pushd docs.flatcar-linux.org || exit
+          git checkout -B site origin/site
+          rsync -av --exclude=.git ../flatcar-website-docs/site/* .
+          git commit -a -m "Update Flatcar docs ($(date +'%Y-%m-%d'))"
+          git checkout -B site.test site
+          git push origin site.test
+          popd || exit
