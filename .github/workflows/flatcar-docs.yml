@@ -20,17 +20,16 @@ jobs:
         run: |
           git config --global user.name 'Flatcar Buildbot'
           git config --global user.email 'buildbot@flatcar-linux.org'
-          git clone git@github.com:dongsupark/docs-test
-          sudo apt-get install -y docker-compose
+          git clone git@github.com:dongsupark/docs-test docs.flatcar-linux.org
           git clone https://github.com/kinvolk/flatcar-website-docs
           pushd flatcar-website-docs || exit
-          git submodule update --init --recursive --remote
-          make docker-compose
+          make fetch-docs
+          python3 -m venv .
+          source bin/activate
+          make build
+          make copy-build
           popd || exit
-          git clone git@github.com:kinvolk/docs.flatcar-linux.org
-          pushd docs.flatcar-linux.org || exit
-          git checkout -B site origin/site
-          rsync -av --exclude=.git ../flatcar-website-docs/site/* .
+          pushd docs.flatcar-linux.org
           git commit -a -m "Update Flatcar docs ($(date +'%Y-%m-%d'))"
           git checkout -B site.test site
           git push origin site.test
