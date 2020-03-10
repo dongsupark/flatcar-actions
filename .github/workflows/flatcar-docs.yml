@@ -9,26 +9,28 @@ jobs:
     name: Automatically update Flatcar docs
     runs-on: ubuntu-latest
     steps:
-      - name: ssh-agent
-        uses: webfactory/ssh-agent@v0.2.0
-        with:
-          #ssh-private-key: ${{ secrets.FLATCAR_DOCS_KEY }}
-          ssh-private-key: ${{ secrets.FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY }}
-      - name: set up git user
+      - name: auto sync flatcar-website-docs
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          #ssh-private-key: ${{ secrets.FLATCAR_DOCS_KEY }}
-          ssh-private-key: ${{ secrets.FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY }}
+          GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
+          FLATCAR_DOCS_KEY: ${{ secrets.FLATCAR_DOCS_KEY }}
+          FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY: ${{ secrets.FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY }}
         run: |
+          sudo apt-get install -y python3-venv mkdocs
           git config --global user.name 'Flatcar Buildbot'
           git config --global user.email 'buildbot@flatcar-linux.org'
-          #git clone git@github.com:dongsupark/docs-test docs.flatcar-linux.org
-          #git clone https://github.com/kinvolk/flatcar-website-docs
+          eval "$(ssh-agent -s)"
+          ssh-add - <<< "${FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY}"
           git clone git@github.com:kinvolk/flatcar-website-docs.git
+          ssh-add -D
+          ssh-add - <<< "${FLATCAR_DOCS_KEY}"
+          git clone git@github.com:dongsupark/docs-test docs.flatcar-linux.org
           pushd flatcar-website-docs || exit
           make fetch-docs
           python3 -m venv .
           source bin/activate
+          pip install -r requirements.txt
+          sudo gem install httparty liquid
           make build
           make copy-build
           popd || exit
