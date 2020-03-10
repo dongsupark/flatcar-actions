@@ -12,16 +12,19 @@ jobs:
       - name: ssh-agent
         uses: webfactory/ssh-agent@v0.2.0
         with:
-          ssh-private-key: ${{ secrets.FLATCAR_DOCS_KEY }}
+          #ssh-private-key: ${{ secrets.FLATCAR_DOCS_KEY }}
+          ssh-private-key: ${{ secrets.FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY }}
       - name: set up git user
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ssh-private-key: ${{ secrets.FLATCAR_DOCS_KEY }}
+          #ssh-private-key: ${{ secrets.FLATCAR_DOCS_KEY }}
+          ssh-private-key: ${{ secrets.FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY }}
         run: |
           git config --global user.name 'Flatcar Buildbot'
           git config --global user.email 'buildbot@flatcar-linux.org'
-          git clone git@github.com:dongsupark/docs-test docs.flatcar-linux.org
-          git clone https://github.com/kinvolk/flatcar-website-docs
+          #git clone git@github.com:dongsupark/docs-test docs.flatcar-linux.org
+          #git clone https://github.com/kinvolk/flatcar-website-docs
+          git clone git@github.com:kinvolk/flatcar-website-docs.git
           pushd flatcar-website-docs || exit
           make fetch-docs
           python3 -m venv .
