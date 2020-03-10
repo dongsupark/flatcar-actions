@@ -7,14 +7,14 @@ on:
 jobs:
   auto-flatcar-docs:
     name: Automatically update Flatcar docs
+    env:
+      GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
     runs-on: ubuntu-latest
     steps:
       - name: auto sync flatcar-website-docs
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
-          FLATCAR_DOCS_KEY: ${{ secrets.FLATCAR_DOCS_KEY }}
           FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY: ${{ secrets.FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY }}
+          FLATCAR_DOCS_KEY: ${{ secrets.FLATCAR_DOCS_KEY }}
         run: |
           sudo apt-get install -y python3-venv mkdocs
           git config --global user.name 'Flatcar Buildbot'
@@ -35,6 +35,7 @@ jobs:
           make copy-build
           popd || exit
           pushd docs.flatcar-linux.org
+          git add [a-z]*
           git commit -a -m "Update Flatcar docs ($(date +'%Y-%m-%d'))"
           git checkout -B site.test site
           git push origin site.test
