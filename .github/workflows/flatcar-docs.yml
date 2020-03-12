@@ -7,20 +7,12 @@ on:
 jobs:
   auto-flatcar-docs:
     name: Automatically update Flatcar docs
-    env:
-      GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: auto sync flatcar-website-docs
-        env:
-          FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY: ${{ secrets.FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY }}
-          FLATCAR_DOCS_KEY: ${{ secrets.FLATCAR_DOCS_KEY }}
-        run: .github/workflows/sync-flatcar-docs.sh
       - name: repository dispatch
         uses: peter-evans/repository-dispatch@v1.0.0
         with:
           token: ${{ secrets.FLATCAR_DOCS_ACCESS_TOKEN }}
           repository: dongsupark/docs-test
           event-type: create-pull-request
-          #client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
