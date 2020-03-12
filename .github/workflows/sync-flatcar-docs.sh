@@ -17,6 +17,8 @@ ssh-add -D
 ssh-add - <<< "${FLATCAR_DOCS_KEY}"
 git clone git@github.com:dongsupark/docs-test docs.flatcar-linux.org
 
+(cd docs.flatcar-linux.org; git checkout -B site.test origin/site)
+
 # Clone flatcar-website-docs, build the docs, and copy the results under
 # `site` directory into docs.flatcar-linux.org repo.
 pushd flatcar-website-docs || exit
@@ -37,7 +39,6 @@ pushd docs.flatcar-linux.org
 git add [a-z]*
 
 git commit -a -m "Update Flatcar docs ($(date +'%Y-%m-%d'))"
-git checkout -B site.test site
 git push origin site.test
 
 popd || exit
