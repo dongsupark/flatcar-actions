@@ -11,32 +11,16 @@ jobs:
       GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=no"
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: auto sync flatcar-website-docs
         env:
           FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY: ${{ secrets.FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY }}
           FLATCAR_DOCS_KEY: ${{ secrets.FLATCAR_DOCS_KEY }}
-        run: |
-          sudo apt-get install -y python3-venv mkdocs
-          git config --global user.name 'Flatcar Buildbot'
-          git config --global user.email 'buildbot@flatcar-linux.org'
-          eval "$(ssh-agent -s)"
-          ssh-add - <<< "${FLATCAR_WEBSITE_DOCS_GITHUB_ACTIONS_KEY}"
-          git clone git@github.com:kinvolk/flatcar-website-docs.git
-          ssh-add -D
-          ssh-add - <<< "${FLATCAR_DOCS_KEY}"
-          git clone git@github.com:dongsupark/docs-test docs.flatcar-linux.org
-          pushd flatcar-website-docs || exit
-          make fetch-docs
-          python3 -m venv .
-          source bin/activate
-          pip install -r requirements.txt
-          sudo gem install httparty liquid
-          make build
-          make copy-build
-          popd || exit
-          pushd docs.flatcar-linux.org
-          git add [a-z]*
-          git commit -a -m "Update Flatcar docs ($(date +'%Y-%m-%d'))"
-          git checkout -B site.test site
-          git push origin site.test
-          popd || exit
+        run: .github/workflows/sync-flatcar-docs.sh
+      - name: repository dispatch
+        uses: peter-evans/repository-dispatch@v1.0.0
+        with:
+          token: ${{ secrets.FLATCAR_DOCS_ACCESS_TOKEN }}
+          repository: dongsupark/docs-test
+          event-type: create-pull-request
+          client-payload: '{"ref": "${{ github.ref }}", "sha": "${{ github.sha }}"}'
